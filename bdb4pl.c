@@ -35,6 +35,10 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #include <config.h>
 #include <SWI-Stream.h>
 #include <pthread.h>
@@ -49,6 +53,10 @@
 #include <string.h>
 #include <assert.h>
 #include <signal.h>
+
+#ifdef _MSC_VER
+#define strdup _strdup
+#endif
 
 #ifdef O_DEBUG
 #define DEBUG(g) g
@@ -1660,13 +1668,12 @@ bdb_init(term_t newenv, term_t option_list)
 	  if ( !PL_get_chars(a2, &v, CVT_ATOM|CVT_STRING|CVT_EXCEPTION) )
 	    goto pl_error;
 	  n = PL_atom_chars(nm);
-	  if ( !(config[nconf] = malloc(strlen(n)+strlen(v)+2)) )
+	  size_t bytes = strlen(n) + strlen(v) + 2; // space and 0
+	  if ( !(config[nconf] = malloc(bytes)) )
 	  { PL_resource_error("memory");
 	    goto pl_error;
 	  }
-	  strcpy(config[nconf], n);
-	  strcat(config[nconf], " ");
-	  strcat(config[nconf], v);
+	  snprintf(config[nconf], bytes, "%s %s", n, v);
 	  config[++nconf] = NULL;
 	}
 	if ( !PL_get_nil_ex(a) )
